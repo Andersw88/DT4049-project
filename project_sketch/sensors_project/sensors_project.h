@@ -1,3 +1,7 @@
+#include <motor_control_msgs/MotorState.h>
+#include <motor_control_msgs/ControlMsg.h>
+
+
 
 struct ControlStates
 {
@@ -37,16 +41,6 @@ struct PIDParameters {
   : Kp_(Kp), Kd_(Kd), Ki_(Ki), Kc_(Kc), u_max_(u_max), u_min_(u_min), I_(I), SatErr(SatErr) {};
 };
 
-// struct MotorShieldPins {
-//   int dir; //direction pin
-//   int pwm; //pwm pin
-//   int cur; //current sensor
-// 
-//   MotorShieldPins(int dir, int pwm, int cur) 
-//   : dir(dir), pwm(pwm), cur(cur) {};
-// };
-
-//this struct holds the pin for the encoder and the current number of ticks
 struct EncoderStates
 {
   int pin1; 
@@ -79,7 +73,6 @@ struct EncoderStates
     pinMode(motorPWMPin, OUTPUT);
     pinMode(motorDirPin, OUTPUT);
 
-
     digitalWrite(pin1, HIGH);
     digitalWrite(pin2, HIGH);
     digitalWrite(motorDirPin, HIGH);
@@ -98,7 +91,7 @@ public:
   EncoderStates encoder;
   PIDParameters PID;
   ControlStates controller;
-  arduino_pkg::MotorState state;
+
   
   
   MotorController(EncoderStates encoder, PIDParameters PID, ControlStates controller) :  encoder(encoder), PID(PID), controller(controller)
