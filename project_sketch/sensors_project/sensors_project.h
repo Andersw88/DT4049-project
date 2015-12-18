@@ -49,6 +49,8 @@ struct EncoderStates
   int motorDirPin;
   int motorCurPin;
   
+  float current;
+  
   int value;
   int prevValue;
   
@@ -61,7 +63,7 @@ struct EncoderStates
   bool calibrate;
   
   
-  float dp_;
+  float velocity;
 //   float filterAlpha;
 
   EncoderStates(int PIN1, int PIN2, int motorPWMPin, int motorDirPin, int motorCurPin, int pos) 
@@ -69,15 +71,18 @@ struct EncoderStates
   {
     pinMode(pin1, INPUT_PULLUP);
     pinMode(pin2, INPUT_PULLUP);
+    
+//     pinMode(pin1, INPUT);
+//     pinMode(pin2, INPUT);
 
     pinMode(motorPWMPin, OUTPUT);
     pinMode(motorDirPin, OUTPUT);
 
-    digitalWrite(pin1, HIGH);
-    digitalWrite(pin2, HIGH);
+//     digitalWrite(pin1, HIGH);
+//     digitalWrite(pin2, HIGH);
     digitalWrite(motorDirPin, HIGH);
     
-    dp_ = 0;
+    velocity = 0;
   };
   
   void readEncoder1();
@@ -108,6 +113,7 @@ public:
   float minimumJerk(float t0, float t, float T, float q0, float qf);
   float pid(float e, float de);
   void updateState();
+  void updateControl();
   void calibrate ();
   
 };
