@@ -1,6 +1,10 @@
 int32 id
+bool vel_control_active
 float32 r
 float32 r_final
 float32 r_initial
 float32 u
 float32 e
+bool position_control_active
+float32 position_error
+float32 position_setpoint

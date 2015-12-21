@@ -26,6 +26,18 @@ struct ControlStates
   : r_(r), rf_(rf), ri_(ri), e_(e), de_(de), ti_(ti), T_(T), u_(u), active_(active), velControlMode(false) {};
 };
 
+struct PositionControl {
+	float rf;
+	float e;
+	bool active;
+
+	PositionControl() {
+		rf = 0.0;
+		e = 0.0;
+		active = false;
+	}
+};
+
 //this struct holds the variables for a PID controller
 struct PIDParameters {
   float Kp_;
@@ -57,14 +69,10 @@ struct EncoderStates
   int maxValue;
   int minValue;
   
-//   int value_debug1;
-//   int value_debug2;
   bool tickTack;
   bool calibrate;
   
-  
   float velocity;
-//   float filterAlpha;
 
   EncoderStates(int PIN1, int PIN2, int motorPWMPin, int motorDirPin, int motorCurPin, int pos) 
   : pin1(PIN1), pin2(PIN2), motorPWMPin(motorPWMPin), motorDirPin(motorDirPin), motorCurPin(motorCurPin), value(pos), calibrate(false)
@@ -81,25 +89,37 @@ struct EncoderStates
 //     digitalWrite(pin1, HIGH);
 //     digitalWrite(pin2, HIGH);
     digitalWrite(motorDirPin, HIGH);
-    
-    velocity = 0;
+
+	current = 0.0f;
+    velocity = 0.0f;
   };
   
   void readEncoder1();
   void readEncoder2();
 };
 
-
+// Below c++11 we don't have scoped enums. Hence we add a ns here.
+namespace CalibrationStage {
+enum CalibrationStage {
+	INACTIVE = 0,
+	START = 1,
+	FIRST_HALF = 2,
+	SWITCHING = 3,
+	SECOND_HALF = 4
+};
+}
 class MotorController
 {
+	
 public:
+  CalibrationStage::CalibrationStage calibrationStage;
   EncoderStates encoder;
   PIDParameters PID;
   ControlStates controller;
+	PositionControl positionController;
 
   
-  
-  MotorController(EncoderStates encoder, PIDParameters PID, ControlStates controller) :  encoder(encoder), PID(PID), controller(controller)
+	MotorController(EncoderStates encoder, PIDParameters PID, ControlStates controller) :  encoder(encoder), PID(PID), controller(controller), calibrationStage(CalibrationStage::INACTIVE)
   {
     
   }
@@ -108,7 +128,7 @@ public:
   void positionControl();
   void velocityControl(const float t_new,  const float dT);
   void initVelocityControl(float velocity,  float time,  float t_new);
-
+  void calibration();
 
   float minimumJerk(float t0, float t, float T, float q0, float qf);
   float pid(float e, float de);
