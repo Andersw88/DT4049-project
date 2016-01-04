@@ -1,0 +1,2 @@
+int32 joint_number
+float32 position
