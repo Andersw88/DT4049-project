@@ -39,64 +39,77 @@ bool motor_on = false;
 
 std::vector<MotorController> motorControllers;
 
-void doEncoderA(){
 
-  EncoderStates& es = motorControllers[0].encoder;
+
+
+void EncoderStates::readEncoder1(){
+
   // look for a low-to-high on channel A
-  if (digitalRead(es.pin1) == HIGH) { 
+  if (digitalRead(pin1) == HIGH) { 
 
     // check channel B to see which way encoder is turning
-    if (digitalRead(es.pin2) == LOW) {  
-      es.value = es.value + 1;         // CW
+    if (digitalRead(pin2) == LOW) {  
+      value = value + 1;         // CW
     } 
     else {
-      es.value = es.value - 1;         // CCW
+      value = value - 1;         // CCW
     }
   }
 
   else   // must be a high-to-low edge on channel A                                       
   { 
     // check channel B to see which way encoder is turning  
-    if (digitalRead(es.pin2) == HIGH) {   
-      es.value = es.value + 1;          // CW
+    if (digitalRead(pin2) == HIGH) {   
+      value = value + 1;          // CW
     } 
     else {
-      es.value = es.value - 1;          // CCW
+      value = value - 1;          // CCW
     }
   }
-//   Serial.println (encoder0Pos, DEC);          
-  // use for debugging - remember to comment out
-
 }
 
-void doEncoderB(){
+void EncoderStates::readEncoder2(){
 
-  EncoderStates& es = motorControllers[0].encoder;
   // look for a low-to-high on channel B
-  if (digitalRead(es.pin2) == HIGH) {   
-
+  if (digitalRead(pin2) == HIGH) {   
    // check channel A to see which way encoder is turning
-    if (digitalRead(es.pin1) == HIGH) {  
-      es.value = es.value + 1;         // CW
+    if (digitalRead(pin1) == HIGH) {  
+      value = value + 1;         // CW
     } 
     else {
-      es.value = es.value - 1;         // CCW
+      value = value - 1;         // CCW
     }
   }
 
   // Look for a high-to-low on channel B
-
   else { 
     // check channel B to see which way encoder is turning  
-    if (digitalRead(es.pin1) == LOW) {   
-      es.value = es.value + 1;          // CW
+    if (digitalRead(pin1) == LOW) {   
+      value = value + 1;          // CW
     } 
     else {
-      es.value = es.value - 1;          // CCW
+      value = value - 1;          // CCW
     }
   }
-
 } 
+
+template <int I>
+void readEncoder1() {
+  motorControllers[I].encoder.readEncoder1();
+}
+
+template <int I>
+void readEncoder2() {
+  motorControllers[I].encoder.readEncoder2();
+}
+
+// void readEncoder1_mc1() {
+//   motorControllers[I].encoder.doEncoderA();
+// }
+// 
+// void readEncoder2_mc1() {
+//   motorControllers[I].encoder.doEncoderB();
+// }
 
 void setup() {
   
@@ -113,9 +126,16 @@ void setup() {
   analogReadResolution(12);
   analogWriteResolution(12);
 
-  attachInterrupt(digitalPinToInterrupt(motorControllers[0].encoder.pin1), doEncoderA, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(motorControllers[0].encoder.pin2), doEncoderB, CHANGE);
-  analogWrite(motorControllers[0].encoder.motorPWMPin,0);
+  
+  attachInterrupt(digitalPinToInterrupt(motorControllers[0].encoder.pin1), readEncoder1<0>, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(motorControllers[0].encoder.pin2), readEncoder2<0>, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(motorControllers[1].encoder.pin1), readEncoder1<1>, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(motorControllers[1].encoder.pin2), readEncoder2<1>, CHANGE);
+  
+  for(int i = 0; i < motorControllers.size(); i++)
+  {
+    analogWrite(motorControllers[i].encoder.motorPWMPin,0);
+  }
   
   nh.initNode();
   nh.advertise(motorStatePublisher);
@@ -136,9 +156,21 @@ void MotorController::calibrate ()
   encoder.minValue = encoder.minValue < encoder.value ? encoder.minValue : encoder.value;
   encoder.maxValue = encoder.maxValue > encoder.value ? encoder.maxValue : encoder.value; 
 }
-
-void readEncoder1() {
+/*
+void readEncoder1_mc0() {
   motorControllers[0].encoder.readEncoder1();
+}
+
+void readEncoder2_mc0() {
+  motorControllers[0].encoder.readEncoder1();
+}
+
+void readEncoder2_mc1() {
+  motorControllers[1].encoder.readEncoder2();
+}
+
+void readEncoder2_mc1() {
+  motorControllers[1].encoder.readEncoder2();
 }
 
 void EncoderStates::readEncoder1() {
@@ -161,9 +193,7 @@ void EncoderStates::readEncoder1() {
   }
 }
 
-void readEncoder2() {
-  motorControllers[0].encoder.readEncoder2();
-}
+
 
 void EncoderStates::readEncoder2() {
   
@@ -181,7 +211,7 @@ void EncoderStates::readEncoder2() {
     }
 //     this->value += (encoderValue1!=0) ? 1 : -1;
   }
-}
+}*/
 
 
 float sign(float value) {
