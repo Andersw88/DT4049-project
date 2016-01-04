@@ -108,12 +108,16 @@ void setup() {
       EncoderStates(51 ,50 ,3, 12, A0, 0), 
       PIDParameters(5.0, 5.0, 1.0, 0.0, pwm_resolution, 0, 0, 0), 
       ControlStates(0, 0, 0, 0, 0, 0, 1.0f, 0, false)));
+	motorControllers[0].encoder.ratio = 17.00;
+	motorControllers[0].calvel = 4.7;
   
   motorControllers.push_back(
     MotorController(
       EncoderStates(53 ,52 ,11, 13, A1, 0), 
       PIDParameters(5.0, 5.0, 1.0, 0.0, pwm_resolution, 0, 0, 0), 
       ControlStates(0, 0, 0, 0, 0, 0, 1.0f, 0, false)));
+	motorControllers[1].encoder.ratio = 1.00;
+	motorControllers[1].calvel = 90; // Should change to 4.7;
 
   t_old = micros()/1000000.0f;
   t_old_serial = micros()/1000000.0f;
@@ -146,11 +150,11 @@ void calibrateCallback(const std_msgs::Int32& msg) {
 	motorControllers[msg.data].calibrationStage = CalibrationStage::START;
 }
 
-void MotorController::calibrate ()
-{
-  encoder.minValue = encoder.minValue < encoder.value ? encoder.minValue : encoder.value;
-  encoder.maxValue = encoder.maxValue > encoder.value ? encoder.maxValue : encoder.value; 
-}
+// void MotorController::calibrate ()
+// {
+//   encoder.minValue = encoder.minValue < encoder.value ? encoder.minValue : encoder.value;
+//   encoder.maxValue = encoder.maxValue > encoder.value ? encoder.maxValue : encoder.value; 
+// }
 
 float sign(float value) {
  return ((value>0)-(value<0));
@@ -173,13 +177,22 @@ void onOffCallback(const std_msgs::Empty& _msg) {
 void setPositionCallback(const motor_control_msgs::Position& _msg) {
   MotorController& mc = motorControllers[_msg.joint_number];
 
-  if(_msg.position < 0.0 || _msg.position > 187.00)
-	  return;
-  if((_msg.position*17) > mc.encoder.value) {
-	  mc.initVelocityControl(90, 5, t_new);
+	// Reject msg if out of bounds.
+	if(_msg.joint_number == 1) {
+			if(_msg.position < 0.0 || _msg.position > 187.00)
+					return;
+	}
+	else if(_msg.joint_number == 2) {
+			if(_msg.position < 0.0 || _msg.position > 320.00)
+					return;
+	}
+	//
+	
+  if((_msg.position*ratio) > mc.encoder.value) {
+	  mc.initVelocityControl(5.29*ratio, 5, t_new);
   }
   else
-	  mc.initVelocityControl(-90, 5, t_new);
+	  mc.initVelocityControl(-5.29*ratio, 5, t_new);
 
   // In degrees.
   mc.positionController.rf = _msg.position;
@@ -206,7 +219,7 @@ void MotorController::calibration() {
 		return;
 	}
 	else if(calibrationStage == CalibrationStage::START) {
-		initVelocityControl(-80, 5, t_new);
+			initVelocityControl(static_cast<int>(-1*calvel*ratio), 5, t_new);
 		controller.active_ = true;
 		calibrationStage = CalibrationStage::FIRST_HALF;
 	}
@@ -214,7 +227,7 @@ void MotorController::calibration() {
 		if(encoder.current > 1.5) {
 			encoder.value = 0;
 			encoder.velocity = 0.0f;
-			initVelocityControl(80, 5, t_new);
+			initVelocityControl(static_cast<int>(calvel*ratio), 5, t_new);
 			calibrationStage = CalibrationStage::SWITCHING;
 		}
 	}
@@ -258,10 +271,10 @@ void MotorController::positionControl()
   if (!positionController.active)
 	  return;
 
-  positionController.e = positionController.rf - (encoder.value/17.0f);
+  positionController.e = positionController.rf - (encoder.value/ratio);
   // Close to finish.
   if(abs(positionController.e) < 2.0) {
-	  initVelocityControl(83*(positionController.e >0?1:-1), 2, t_new);
+			initVelocityControl((4.88*ratio)*(positionController.e >0?1:-1), 2, t_new);
   }
   // Have we reached the position?
   // else if(abs(positionController.e) < 1.0) {
@@ -330,8 +343,8 @@ void MotorController::updateState() {
   lastTime = currTime;
   encoder.prevValue = encoder.value;
   
-  motorState.position = encoder.value / 17.00;
-  motorState.velocity = encoder.velocity / 17.00;
+  motorState.position = encoder.value / ratio;
+  motorState.velocity = encoder.velocity / ratio;
   motorState.current = encoder.current;
   motorState.id = 0;
 }
@@ -339,12 +352,12 @@ void MotorController::updateState() {
 void MotorController::updateControl(){
   controlState.id = 0;
   controlState.vel_control_active = controller.active_;
-  controlState.r = controller.r_ / 17.00;
+  controlState.r = controller.r_ / ratio;
 
-  controlState.r_final = controller.rf_ / 17.00;
-  controlState.r_initial = controller.ri_ / 17.00;
+  controlState.r_final = controller.rf_ / ratio;
+  controlState.r_initial = controller.ri_ / ratio;
   controlState.u = controller.u_;
-  controlState.e = controller.e_ / 17.00;
+  controlState.e = controller.e_ / ratio;
 
   controlState.position_control_active = positionController.active;
   controlState.position_error = positionController.e;
@@ -360,7 +373,7 @@ void loop() {
   
   if (abs(t_new - t_old_serial) > dT_serial) {
     
-    for(int i = 1; i < motorControllers.size(); i++)
+    for(int i = 0; i < motorControllers.size(); i++)
     {
       MotorController& mc = motorControllers[i];
       mc.updateState();

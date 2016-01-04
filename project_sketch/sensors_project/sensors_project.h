@@ -59,6 +59,8 @@ struct EncoderStates
   int motorPWMPin;
   int motorDirPin;
   int motorCurPin;
+
+	int ratio;
   
   float current;
   
@@ -115,7 +117,8 @@ public:
   EncoderStates encoder;
   PIDParameters PID;
   ControlStates controller;
-	PositionControl positionController;
+  PositionControl positionController;
+	float calvel;
 
   
 	MotorController(EncoderStates encoder, PIDParameters PID, ControlStates controller) :  encoder(encoder), PID(PID), controller(controller), calibrationStage(CalibrationStage::INACTIVE)
