@@ -11,6 +11,7 @@ add_message_files(
   FILES
   MotorState.msg
   ControlMsg.msg
+  Position.msg
 )
 
 generate_messages(
