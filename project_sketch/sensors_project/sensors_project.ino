@@ -2,17 +2,17 @@
 #define USE_USBCON
 #include <vector>
 #include <ros.h>
-// #include <arduino_pkg/MotorState.h>
 
 #include <std_msgs/Empty.h>
 #include <std_msgs/Int32.h>
 #include <std_msgs/Float32.h>
+#include <motor_control_msgs/Position.h>
 #include "sensors_project.h"
 
 void readEncoder1();
 void readEncoder2();
 
-void setPositionCallback(const std_msgs::Float32& _msg);
+void setPositionCallback(const motor_control_msgs::Position& _msg);
 void setVelCallback(const std_msgs::Int32& _msg);
 void onOffCallback(const std_msgs::Empty& _msg);
 void calibrateCallback(const std_msgs::Empty& msg);
@@ -23,7 +23,7 @@ motor_control_msgs::MotorState motorState;
 motor_control_msgs::ControlMsg controlState;
 ros::Publisher motorStatePublisher("/motor_state", &motorState);
 ros::Publisher controlStatePublisher("/control_state", &controlState);
-ros::Subscriber<std_msgs::Float32> positionSubscriber("set_position", &setPositionCallback);
+ros::Subscriber<motor_control_msgs::Position> positionSubscriber("set_position", &setPositionCallback);
 ros::Subscriber<std_msgs::Int32> velSubscriber("set_vel", &setVelCallback);
 ros::Subscriber<std_msgs::Empty> onOffSubscriber("on_off", &onOffCallback);
 ros::Subscriber<std_msgs::Empty> calSubscriber("calibrate", &calibrateCallback);
@@ -232,22 +232,22 @@ void onOffCallback(const std_msgs::Empty& _msg) {
 	}
 }
 
-void setPositionCallback(const std_msgs::Float32& _msg) {
-  MotorController& mc = motorControllers[0];
+void setPositionCallback(const motor_control_msgs::Position& _msg) {
+  MotorController& mc = motorControllers[_msg.joint_number];
 
-  if(_msg.data < 0.0 || _msg.data > 187.00)
+  if(_msg.position < 0.0 || _msg.position > 187.00)
 	  return;
-  if((_msg.data*17) > mc.encoder.value) {
+  if((_msg.position*17) > mc.encoder.value) {
 	  mc.initVelocityControl(90, 5, t_new);
   }
   else
 	  mc.initVelocityControl(-90, 5, t_new);
 
   // In degrees.
-  mc.positionController.rf = _msg.data;
+  mc.positionController.rf = _msg.position;
   mc.controller.active_ = true;
   mc.positionController.active = true;
-//   mc.controller.rf_ = _msg.data * mc.encoder.maxValue/187.0f;
+//   mc.controller.rf_ = _msg.position * mc.encoder.maxValue/187.0f;
 //   mc.controller.T_= 10.0f;
 //   mc.controller.ri_ = mc.encoder.value;
 //   mc.controller.ti_ = t_new;

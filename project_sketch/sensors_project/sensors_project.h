@@ -2,7 +2,6 @@
 #include <motor_control_msgs/ControlMsg.h>
 
 
-
 struct ControlStates
 {
   float r_; //setpoint value at current iteration
