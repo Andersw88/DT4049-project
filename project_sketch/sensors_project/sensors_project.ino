@@ -207,7 +207,7 @@ void setPositionCallback(const std_msgs::Float32& _msg) {
 
   if(_msg.data < 0.0 || _msg.data > 187.00)
 	  return;
-  if(_msg.data > mc.encoder.value) {
+  if((_msg.data*17) > mc.encoder.value) {
 	  mc.initVelocityControl(90, 5, t_new);
   }
   else
