@@ -9,13 +9,10 @@
 #include <motor_control_msgs/Position.h>
 #include "sensors_project.h"
 
-void readEncoder1();
-void readEncoder2();
-
 void setPositionCallback(const motor_control_msgs::Position& _msg);
 void setVelCallback(const std_msgs::Int32& _msg);
 void onOffCallback(const std_msgs::Empty& _msg);
-void calibrateCallback(const std_msgs::Empty& msg);
+void calibrateCallback(const std_msgs::Int32& msg);
 
 
 ros::NodeHandle nh;
@@ -26,7 +23,7 @@ ros::Publisher controlStatePublisher("/control_state", &controlState);
 ros::Subscriber<motor_control_msgs::Position> positionSubscriber("set_position", &setPositionCallback);
 ros::Subscriber<std_msgs::Int32> velSubscriber("set_vel", &setVelCallback);
 ros::Subscriber<std_msgs::Empty> onOffSubscriber("on_off", &onOffCallback);
-ros::Subscriber<std_msgs::Empty> calSubscriber("calibrate", &calibrateCallback);
+ros::Subscriber<std_msgs::Int32> calSubscriber("calibrate", &calibrateCallback);
 
 
 const float pwm_resolution = 4095;
@@ -103,20 +100,18 @@ void readEncoder2() {
   motorControllers[I].encoder.readEncoder2();
 }
 
-// void readEncoder1_mc1() {
-//   motorControllers[I].encoder.doEncoderA();
-// }
-// 
-// void readEncoder2_mc1() {
-//   motorControllers[I].encoder.doEncoderB();
-// }
-
 void setup() {
   
   
   motorControllers.push_back(
     MotorController(
       EncoderStates(51 ,50 ,3, 12, A0, 0), 
+      PIDParameters(5.0, 5.0, 1.0, 0.0, pwm_resolution, 0, 0, 0), 
+      ControlStates(0, 0, 0, 0, 0, 0, 1.0f, 0, false)));
+  
+  motorControllers.push_back(
+    MotorController(
+      EncoderStates(53 ,52 ,11, 13, A1, 0), 
       PIDParameters(5.0, 5.0, 1.0, 0.0, pwm_resolution, 0, 0, 0), 
       ControlStates(0, 0, 0, 0, 0, 0, 1.0f, 0, false)));
 
@@ -146,9 +141,9 @@ void setup() {
   nh.subscribe(calSubscriber);
 }
 
-void calibrateCallback(const std_msgs::Empty& msg) {
+void calibrateCallback(const std_msgs::Int32& msg) {
 	// Calibration will start once calibration() is called.
-	motorControllers[0].calibrationStage = CalibrationStage::START;
+	motorControllers[msg.data].calibrationStage = CalibrationStage::START;
 }
 
 void MotorController::calibrate ()
@@ -156,63 +151,6 @@ void MotorController::calibrate ()
   encoder.minValue = encoder.minValue < encoder.value ? encoder.minValue : encoder.value;
   encoder.maxValue = encoder.maxValue > encoder.value ? encoder.maxValue : encoder.value; 
 }
-/*
-void readEncoder1_mc0() {
-  motorControllers[0].encoder.readEncoder1();
-}
-
-void readEncoder2_mc0() {
-  motorControllers[0].encoder.readEncoder1();
-}
-
-void readEncoder2_mc1() {
-  motorControllers[1].encoder.readEncoder2();
-}
-
-void readEncoder2_mc1() {
-  motorControllers[1].encoder.readEncoder2();
-}
-
-void EncoderStates::readEncoder1() {
-  
-  if (tickTack)
-  {
-    tickTack = !tickTack;
-    int encoderValue1=digitalRead(this->pin1);
-    int encoderValue2=digitalRead(this->pin2);
-//     this->value += (encoderValue2==0) ? encoderValue1 : -encoderValue1;
-    
-    
-    if(encoderValue1)
-    {
-      tickTack = !tickTack;
-      this->value += (encoderValue2==0) ? 1 : -1;
-    }
-//     this->value += (encoderValue2==0) ? 1 : -1;
-//     this->value++;
-  }
-}
-
-
-
-void EncoderStates::readEncoder2() {
-  
-  if (!tickTack)
-  {
-
-    int encoderValue1=digitalRead(this->pin1);
-    int encoderValue2=digitalRead(this->pin2);
-//     this->value += (encoderValue1!=0) ? encoderValue2 : -encoderValue2;
-    
-    if(encoderValue2)
-    {
-      tickTack = !tickTack;
-      this->value += (encoderValue1!=0) ? 1 : -1;
-    }
-//     this->value += (encoderValue1!=0) ? 1 : -1;
-  }
-}*/
-
 
 float sign(float value) {
  return ((value>0)-(value<0));
@@ -257,7 +195,6 @@ void setPositionCallback(const motor_control_msgs::Position& _msg) {
 }
 
 void setVelCallback(const std_msgs::Int32& _msg) {
-  
   MotorController& mc = motorControllers[0];
   mc.initVelocityControl(_msg.data,  5,  t_new );
   mc.controller.active_ = true;
@@ -423,21 +360,21 @@ void loop() {
   
   if (abs(t_new - t_old_serial) > dT_serial) {
     
-    
-    MotorController& mc = motorControllers[0];
-    
-    mc.updateState();
+    for(int i = 1; i < motorControllers.size(); i++)
+    {
+      MotorController& mc = motorControllers[i];
+      mc.updateState();
 
-	mc.calibration();
-    mc.velocityControl(t_new, t_new - t_old_serial);
-	mc.positionControl();
-
-	mc.updateControl();
-    
-    motorStatePublisher.publish(&motorState);
-    controlStatePublisher.publish(&controlState);
-    
-    mc.actuate();
+      mc.calibration();
+      mc.velocityControl(t_new, t_new - t_old_serial);
+      mc.positionControl();
+      mc.updateControl();
+      
+      motorStatePublisher.publish(&motorState);
+      controlStatePublisher.publish(&controlState);
+      
+      mc.actuate();
+    }
     t_old_serial = t_new;
   }
 }
