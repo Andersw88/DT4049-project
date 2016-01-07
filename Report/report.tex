@@ -17,6 +17,31 @@
 \section{Introduction}
 
 \section{Description of task}
+The Scortec ER-I is a 5-DOF manipulator from Eshed Robotec. The
+control box is missing and a new controller is needed. For this
+purpose, the Arduino Due board and a motor shield is used. \\
+
+Figure \ref{fig:axes} shows a description of the axes on the manipulator.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics{axes.png}
+    \caption{Description of axes}
+    \label{fig:axes}
+\end{figure}
+
+The task of creating a controller for the manipulator involves the
+following steps:
+\begin{enumerate}
+\item Reverse engineer the motor and encoder connections and make a
+  pinout diagram for the D50 connector on the manipulator.
+\item Program the microcontroller to read the encoders.
+\item Write control routines for position and velocity control.
+\item Extend the control routines to more than one joint.
+\end{enumerate}
+
+The following sections describe each of these tasks and challenges
+faced while executing them.
 
 \section{Reverse Engineering}
 
@@ -24,7 +49,7 @@
 \subsection{Encoders}
 \subsection{Debouncing}
 
-\section{Programming}
+\section{Control routines}
 
 \subsection{Calibration}
 \subsection{Velocity Control}
@@ -35,5 +60,7 @@
 
 \subsection{Calibration}
 \subsection{Accuracy and Precision for Joint 1}
+
+\section{Future Work}
 
 \end{document}
