@@ -45,8 +45,24 @@ faced while executing them.
 
 \section{Reverse Engineering}
 
+In this task, we set out to map the pins on the D50 connector to the
+individual motors and encoders. Once the pin-out diagram was in place
+we could connect the Arduino and read the encoder pins. However, we
+faced some problems while reading encoder outputs. The following
+sections describe each of these tasks in detail. \\
+
 \subsection{Pinout}
+The primary task was to figure out the what each pin on the D50
+connector meant. For this task we first took one motor and used the
+multimeter to test for continuity. \\
+
+The encoder board has 6 pins but only 4 had corresponding pins on the
+D50 connector, and the motor had two corresponding pins (one positive
+and one negative). \\
+
+The figure below shows the pinouts for the D50 connector.
 \subsection{Encoders}
+
 \subsection{Debouncing}
 
 \section{Control routines}
