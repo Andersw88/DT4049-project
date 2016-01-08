@@ -8,6 +8,7 @@
 \usepackage{subcaption}
 \usepackage{float}
 \usepackage{minted}
+\usepackage{cite}
 \usepackage[top=1.0in, bottom=1.0in, left=0.75in, right=0.75in]{geometry}
 \author{Chittaranjan Srinivas Swaminathan and Anders Wikstrom}
 \title{Scortec ER-I Manipulator Control using Arduino Due}
@@ -18,9 +19,10 @@
 \section{Introduction}
 
 \section{Description of task}
-The Scortec ER-I is a 5-DOF manipulator from Eshed Robotec. The
-control box is missing and a new controller is needed. For this
-purpose, the Arduino Due board and a motor shield is used. \\
+The Scortec ER-I is a 5-DOF manipulator from Eshed Robotec whose
+control box is missing. The goal of this project is to use the Arduino
+Due board and a motor shield to make a new controller for the
+manipulator. 
 
 Figure \ref{fig:axes} shows a sketch of the manipulator and the axes.
 
@@ -55,7 +57,21 @@ sections describe each of these tasks in detail. \\
 \subsection{Pinout}
 The primary task was to figure out the what each pin on the D50
 connector meant. For this task we first took one motor and used the
-multimeter to test for continuity. \\
+multimeter to test for continuity. The process was repeated for each
+motor and encoder board. Figuring out the circuit on the encoder board
+was also important so as to understand which pins were the power
+supply pins and which pins were the output pins.\\
+
+The figure \ref{fig:dsub} is the pinout diagram. Note
+that: \begin{itemize} 
+\item \( E^a_b \) refers to output of encoder \textit{b} on joint \textit{a}.
+\item \( GND^a \) refers to ground for encoder board on joint \textit{a}.
+\item \( V^a_{cc} \) refers to power supply for encoder board on joint
+\textit{a}.
+\item \( M^a+ \) refers to the positive pin on motor \textit{a}.
+\item \( M^a- \) refers to the negative pin on motor \textit{a}.
+\end{itemize}
+
 
 \begin{figure}[h]
     \centering
@@ -64,13 +80,6 @@ multimeter to test for continuity. \\
     \label{fig:dsub}
 \end{figure}
 
-The figure \ref{fig:dsub} is the pinout diagram.\\
-\( E^a_b \) refers to output of encoder \textit{b} on joint \textit{a}.\\
-\( GND^a \) refers to ground for encoder board on joint \textit{a}.\\
-\( V^a_{cc} \) refers to power supply for encoder board on joint
-\textit{a}.\\ 
-\( M^a+ \) refers to the positive pin on motor \textit{a}.\\
-
 The motor has two pins (one positive and one negative) on the
 connector. Each encoder board has a pair of encoders, thus enabling us
 to read the incremental position of the joint as well as the direction
@@ -78,7 +87,7 @@ in which the joint is moving. The board has 6 pins but only 4 had
 corresponding pins on the D50 connector. Also, it is important to
 figure out what each of these pins meant.\\
 
-To do this, we proceeded as follows:
+To do this, we used the following steps:
 \begin{enumerate}
 \item The basic circuit for a Photodiode-LED pair is shown in figure
   \ref{fig:photodiodeLEDPair}. 
@@ -87,7 +96,8 @@ To do this, we proceeded as follows:
 \item Using the above two, figure out the circuit diagram of the
   board. This was found to be equivalent to figure
   \ref{fig:encoderCircuit}. 
-\item Finally, relate each pin on the encoder board to the circuit.
+\item Finally, relate each pin on the encoder board to the
+  circuit. 
 \end{enumerate}
 
 \begin{figure}[h]
@@ -100,25 +110,129 @@ To do this, we proceeded as follows:
 \begin{figure}[h]
     \centering
     \includegraphics[scale=0.5]{EncoderCircuit.jpg}
-    \caption{Equivalent Encoder circuitry with two Photodiode-LED
+    \caption{Equivalent Encoder circuit with two Photodiode-LED
       pairs. The photodiode is circled.}
     \label{fig:encoderCircuit}
 \end{figure}
 
+At this point, we were ready to read the encoder inputs from the
+microcontroller. 
+
 \subsection{Debouncing}
+
+Routines to read the encoders were implemented from
+\cite{ArduinoPlaygroundRE}.
+The first test was to move the motor shaft by hand and check if the
+rotation produced the necessary encoder ticks. This step gave positive
+results. The next step was to move the joint by hand and see if the
+incremental position was stable between motions. This step also gave
+positive results. The position was only off by a few ticks everytime
+the joint was moved from one extremum position to another. \\
+
+However, when the joint was moved using PWM input, we obtained far
+more encoder ticks than when moved manually. Furthur inquiry lead us
+to use a debouncer circuit shown in figure \ref{fig:rcfilter}. This is
+also take from the Arduino Playground page on rotary encoders
+\cite{ArduinoPlaygroundRE}.\\
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[scale=0.5]{debouncer.jpg}
+    \caption{An RC filter for debouncing.}
+    \label{fig:rcfilter}
+\end{figure}
+
+After introducing the RC Filter (hardware debounce circuit), the
+encoder readings seemed to be fairly stable. Minor error were still
+observed. 
 
 \section{Control routines}
 
+In this section, the control routines and organization of code is
+described. We employ a PID controller for velocity 
+
 \subsection{Calibration}
+
+Each joint is calibrated as follows:
+\begin{itemize}
+\item The joint to be calibrated is first moved in the negative
+  direction\footnote{Negative direction is the direction that results
+    in negative encoder readings} till the extremum is reached. The
+  extremum point is detected by measuring the current.
+\item At this point the encoder value is reset. 
+\item The joint is then moved to the other extremum in the positive
+  direction, at which point calibration ends.
+\item The encoder value at positive extremum is the total encoder
+  ticks for full range movement of the joint.
+
+%%%%
+%%
+%% Write something about why this is done and how we do it in code.
+%%
+%%%%
+
+\subsubsection{Results from calibration}
+The range of the joints was taken from the datasheet of the
+manipulator. If we calculate the total encoder ticks for the full
+range of a joint, then we can compute a ratio to convert angular
+displacement/velocity described in encoder ticks to
+degrees. We have,
+\[ \alpha = \frac{range\ of\ joint}{measured\ encoder\ ticks}\]
+
+where \(\alpha\) is the ratio described above\footnote{The ratio
+  \(\alpha\) is simply called 'ratio' in code.}. The unit of
+\(\alpha\) is \( \frac{encoder\ ticks}{degree}\). \\
+
+We observed that the number of ticks over the full range varied more
+than a few tens of ticks. Hence, we averaged the measured ticks and
+computed a ratio from the average. \\ 
+
+\begin{tabular}{ | l | r | r |}
+\hline
+- & \textbf{Joint 1} & \textbf{Joint 3} \\
+\hline
+1 & 9748 & 3195 \\
+\hline
+2 & 9924 & 3178 \\
+\hline
+3 & 9832 & 3181 \\
+\hline
+4 & 9850 & 3193 \\
+\hline
+5 & 9796 & 3194 \\
+\hline
+\textbf{Mean} & 9830 & 3188.2 \\
+\hline
+\textbf{Ratio} & 30.71875 & 17.049 \\
+\hline
+
+\end{tabular}
+
 \subsection{Velocity Control}
 \subsection{Position Control}
 \subsection{Overall organization of code}
 
 \section{Evaluation of the system}
 
-\subsection{Calibration}
+Two methods:
+\begin{itemize}
+\item Accuracy and precision of the incremental optical encoders.
+\item Accuracy and precision of the control system.
+\end{itemize}
+
 \subsection{Accuracy and Precision for Joint 1}
+How did we measure?
+What did we get?
 
 \section{Future Work}
-
+\begin{itemize}
+\item After obtaining ratios for each joint from calibration, we could
+  replace the calibration routines with ``home'' routine. When the arm
+  is HOME-d, each joint simply moves to the negative extremum
+  position. 
+\item Add all joints. Framework is ready.
+\item Do some forward kinematics and output tf to ROS.
+\item Write a controller for Moveit.
+\bibliographystyle{ieeetr}
+\bibliography{report}
 \end{document}
