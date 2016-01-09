@@ -29,7 +29,8 @@ ros::Subscriber<std_msgs::Int32> calSubscriber("calibrate", &calibrateCallback);
 const float pwm_resolution = 4095;
 float t_new, t_old, t_old_serial;
 float dT = 0.001;
-float dT_serial = 0.05;
+
+
 float current;
 
 bool motor_on = false;
@@ -101,23 +102,26 @@ void readEncoder2() {
 }
 
 void setup() {
+  dT_serial = 0.05;
   
   
-  motorControllers.push_back(
-    MotorController(
-      EncoderStates(51 ,50 ,3, 12, A0, 0), 
+    motorControllers.push_back(
+    MotorController(motorControllers.size(),
+      EncoderStates(53 ,52 ,11, 13, A1, 0, 320), 
       PIDParameters(5.0, 5.0, 1.0, 0.0, pwm_resolution, 0, 0, 0), 
       ControlStates(0, 0, 0, 0, 0, 0, 1.0f, 0, false)));
-	motorControllers[0].encoder.ratio = 17.00;
-	motorControllers[0].calvel = 4.7;
+	motorControllers[0].encoder.ratio = 30.72;
+	motorControllers[0].calvel = 9.4; // Should change to 4.7;
+
   
   motorControllers.push_back(
-    MotorController(
-      EncoderStates(53 ,52 ,11, 13, A1, 0), 
+    MotorController(motorControllers.size(),
+      EncoderStates(51 ,50 ,3, 12, A0, 0, 187), 
       PIDParameters(5.0, 5.0, 1.0, 0.0, pwm_resolution, 0, 0, 0), 
       ControlStates(0, 0, 0, 0, 0, 0, 1.0f, 0, false)));
-	motorControllers[1].encoder.ratio = 1.00;
-	motorControllers[1].calvel = 90; // Should change to 4.7;
+	motorControllers[1].encoder.ratio = 17.00;
+	motorControllers[1].calvel = 4.7;
+  
 
   t_old = micros()/1000000.0f;
   t_old_serial = micros()/1000000.0f;
@@ -126,10 +130,10 @@ void setup() {
   analogWriteResolution(12);
 
   
-  attachInterrupt(digitalPinToInterrupt(motorControllers[0].encoder.pin1), readEncoder1<0>, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(motorControllers[0].encoder.pin2), readEncoder2<0>, CHANGE);
   attachInterrupt(digitalPinToInterrupt(motorControllers[1].encoder.pin1), readEncoder1<1>, CHANGE);
   attachInterrupt(digitalPinToInterrupt(motorControllers[1].encoder.pin2), readEncoder2<1>, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(motorControllers[0].encoder.pin1), readEncoder1<0>, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(motorControllers[0].encoder.pin2), readEncoder2<0>, CHANGE);
   
   for(int i = 0; i < motorControllers.size(); i++)
   {
@@ -148,6 +152,7 @@ void setup() {
 void calibrateCallback(const std_msgs::Int32& msg) {
 	// Calibration will start once calibration() is called.
 	motorControllers[msg.data].calibrationStage = CalibrationStage::START;
+	motorControllers[msg.data].positionController.active =  false;
 }
 
 // void MotorController::calibrate ()
@@ -161,42 +166,40 @@ float sign(float value) {
 }
 
 void onOffCallback(const std_msgs::Empty& _msg) {
-
-	MotorController& mc = motorControllers[0];
-	  
-	if(motor_on) {
-		motor_on = false;
-		analogWrite(mc.encoder.motorPWMPin, 0);
-	}
-	else {
-		motor_on = true;
-		analogWrite(mc.encoder.motorPWMPin, 1000);
-	}
+  
+  for(int i = 0; i < motorControllers.size(); i++)
+  {
+    MotorController& mc = motorControllers[i];
+    if(motor_on) {
+      mc.positionController.active = false;
+      mc.velocityController.active = false;
+      motor_on = false;
+      analogWrite(mc.encoder.motorPWMPin, 0);
+    }
+    else {
+      motor_on = true;
+      analogWrite(mc.encoder.motorPWMPin, 1000);
+    }
+  }
 }
 
 void setPositionCallback(const motor_control_msgs::Position& _msg) {
   MotorController& mc = motorControllers[_msg.joint_number];
 
-	// Reject msg if out of bounds.
-	if(_msg.joint_number == 1) {
-			if(_msg.position < 0.0 || _msg.position > 187.00)
-					return;
-	}
-	else if(_msg.joint_number == 2) {
-			if(_msg.position < 0.0 || _msg.position > 320.00)
-					return;
-	}
-	//
+  // 	// Reject msg if out of bounds.
+  if(_msg.position < mc.encoder.minValue || _msg.position > mc.encoder.maxValue)
+		  return;
+
 	
-  if((_msg.position*ratio) > mc.encoder.value) {
-	  mc.initVelocityControl(5.29*ratio, 5, t_new);
+  if((_msg.position*mc.encoder.ratio) > mc.encoder.value) {
+	  mc.initVelocityControl(5.29*mc.encoder.ratio, 5, t_new);
   }
   else
-	  mc.initVelocityControl(-5.29*ratio, 5, t_new);
+	  mc.initVelocityControl(-5.29*mc.encoder.ratio, 5, t_new);
 
   // In degrees.
   mc.positionController.rf = _msg.position;
-  mc.controller.active_ = true;
+  mc.velocityController.active = true;
   mc.positionController.active = true;
 //   mc.controller.rf_ = _msg.position * mc.encoder.maxValue/187.0f;
 //   mc.controller.T_= 10.0f;
@@ -210,7 +213,7 @@ void setPositionCallback(const motor_control_msgs::Position& _msg) {
 void setVelCallback(const std_msgs::Int32& _msg) {
   MotorController& mc = motorControllers[0];
   mc.initVelocityControl(_msg.data,  5,  t_new );
-  mc.controller.active_ = true;
+  mc.velocityController.active = true;
 }
 
 void MotorController::calibration() {
@@ -219,30 +222,29 @@ void MotorController::calibration() {
 		return;
 	}
 	else if(calibrationStage == CalibrationStage::START) {
-			initVelocityControl(static_cast<int>(-1*calvel*ratio), 5, t_new);
-		controller.active_ = true;
+			initVelocityControl(static_cast<int>(-1*calvel*encoder.ratio), 5, t_new);
+		velocityController.active = true;
 		calibrationStage = CalibrationStage::FIRST_HALF;
 	}
 	else if(calibrationStage == CalibrationStage::FIRST_HALF) {
 		if(encoder.current > 1.5) {
-			encoder.value = 0;
-			encoder.velocity = 0.0f;
-			initVelocityControl(static_cast<int>(calvel*ratio), 5, t_new);
+			velocityController.active = false;
 			calibrationStage = CalibrationStage::SWITCHING;
 		}
 	}
 	else if(calibrationStage == CalibrationStage::SWITCHING) {
-		if(encoder.current > 1.5) {
-			// we need to wait for the arm to turn around.
-			return;
-		}
-		else {
+		if(encoder.current < 0.1){
+			encoder.value = 0;
+			encoder.velocity = 0.0f;
+			initVelocityControl(static_cast<int>(calvel*encoder.ratio), 5, t_new);
+			velocityController.active = true;
 			calibrationStage = CalibrationStage::SECOND_HALF;
 		}
 	}
 	else {
 		if(encoder.current > 1.5) {
-			controller.active_ = false;
+			velocityController.active = false;
+			encoder.maxValue = encoder.value;
 			calibrationStage = CalibrationStage::INACTIVE;
 		}
 	}
@@ -251,11 +253,11 @@ void MotorController::calibration() {
 
 void MotorController::actuate() {
   
-  float control = controller.u_;
+  float control = velocityController.u_;
   int motor_dir = control > 0 ? LOW : HIGH;
   digitalWrite(encoder.motorDirPin, motor_dir);
   
-  if (controller.active_ && abs(control) > 1.0)
+  if (velocityController.active && abs(control) > 1.0)
   {
     analogWrite(encoder.motorPWMPin, abs(control) + PID.u_min_);
   }
@@ -271,42 +273,46 @@ void MotorController::positionControl()
   if (!positionController.active)
 	  return;
 
-  positionController.e = positionController.rf - (encoder.value/ratio);
-  // Close to finish.
-  if(abs(positionController.e) < 2.0) {
-			initVelocityControl((4.88*ratio)*(positionController.e >0?1:-1), 2, t_new);
+  positionController.e = positionController.rf - (encoder.value/encoder.ratio);
+
+  if(abs(positionController.e) > 2.0) {
+    if(velocityController.active == false) //Only call initVelocityControl if velocityController was inactive.
+      initVelocityControl((4.88*encoder.ratio)*(positionController.e >0?1:-1), 2, t_new);
+    velocityController.active = true;
   }
-  // Have we reached the position?
-  // else if(abs(positionController.e) < 1.0) {
-  // 	  controller.active_ = false;
-  // 	  positionController.active = false;
-  // }
+  else 
+    velocityController.active = true;
   
+  if(encoder.current > 1.5) //Disables controller if current is to high, if the motor is unable to move futher.
+  {
+    velocityController.active = false;
+    positionController.active = false;
+  }  
 }
 
 void MotorController::velocityControl(const float t_new,  const float dT)
 {
-  if (!controller.active_)
+  if (!velocityController.active)
     return;
 
-  float current_reference = minimumJerk(controller.ti_, t_new, controller.T_, controller.ri_, controller.rf_);
+  float current_reference = minimumJerk(velocityController.ti_, t_new, velocityController.T_, velocityController.ri_, velocityController.rf_);
 
   // Step response instead of Minimum Jerk
   //float current_reference = controller.rf_;  
   
   float error = current_reference-encoder.velocity;
-  float de_error=(error - controller.e_) / dT_serial;
-  controller.u_ = pid(error, de_error);
-  controller.r_ = current_reference;
-  controller.e_= error;
-  controller.de_= de_error;
+  float de_error=(error - velocityController.e_) / dT_serial;
+  velocityController.u_ = pid(error, de_error);
+  velocityController.r_ = current_reference;
+  velocityController.e_= error;
+  velocityController.de_= de_error;
 }
 
 void MotorController::initVelocityControl(float velocity,  float time,  float t_new) {
-  controller.rf_ = velocity;
-  controller.T_= time;
-  controller.ri_ = encoder.velocity;
-  controller.ti_ = t_new;
+  velocityController.rf_ = velocity;
+  velocityController.T_= time;
+  velocityController.ri_ = encoder.velocity;
+  velocityController.ti_ = t_new;
   PID.I_ = 0.0;
 }
 
@@ -332,32 +338,32 @@ void MotorController::updateState() {
   
 //   encoder.current = encoder.current*0.90 + analogRead(encoder.motorCurPin) * 0.10;
   
-  static float lastTime = micros()/1000000.0f - dT_serial;
+//   lastTime = micros()/1000000.0f - dT_serial;
   
   float currTime = micros()/1000000.0f;
-  encoder.velocity = (encoder.velocity*0.90) + (((encoder.value - encoder.prevValue) / (currTime - lastTime)) * 0.10);
+  encoder.velocity = (encoder.velocity*0.90) + (((encoder.value - encoder.prevValue) / (currTime - encoder.lastTime)) * 0.10);
 
   float current = analogRead(encoder.motorCurPin) * (2.0f/(4095.0f));
   encoder.current = (encoder.current*0.90) + (current*0.10);
   
-  lastTime = currTime;
+  encoder.lastTime = currTime;
   encoder.prevValue = encoder.value;
   
-  motorState.position = encoder.value / ratio;
-  motorState.velocity = encoder.velocity / ratio;
+  motorState.position = encoder.value / encoder.ratio;
+  motorState.velocity = encoder.velocity / encoder.ratio;
   motorState.current = encoder.current;
-  motorState.id = 0;
+  motorState.id = id;
 }
 
 void MotorController::updateControl(){
-  controlState.id = 0;
-  controlState.vel_control_active = controller.active_;
-  controlState.r = controller.r_ / ratio;
+  controlState.id = id;
+  controlState.vel_control_active = velocityController.active;
+  controlState.r = velocityController.r_ / encoder.ratio;
 
-  controlState.r_final = controller.rf_ / ratio;
-  controlState.r_initial = controller.ri_ / ratio;
-  controlState.u = controller.u_;
-  controlState.e = controller.e_ / ratio;
+  controlState.r_final = velocityController.rf_ / encoder.ratio;
+  controlState.r_initial = velocityController.ri_ / encoder.ratio;
+  controlState.u = velocityController.u_;
+  controlState.e = velocityController.e_ / encoder.ratio;
 
   controlState.position_control_active = positionController.active;
   controlState.position_error = positionController.e;

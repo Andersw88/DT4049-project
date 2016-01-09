@@ -1,6 +1,8 @@
 #include <motor_control_msgs/MotorState.h>
 #include <motor_control_msgs/ControlMsg.h>
 
+float dT_serial;
+
 
 struct ControlStates
 {
@@ -15,14 +17,14 @@ struct ControlStates
 
   float u_; //computed control
 
-  bool active_; //flag indicating whether the corresponding controller is active or not
-  bool velControlMode;
+  bool active; //flag indicating whether the corresponding controller is active or not
+//   bool velControlMode;
 
 //   ControlStates(float r,  float e) 
 //   : r_(r), rf_(rf), ri_(ri), e_(e), de_(de), ti_(ti), T_(T), u_(u), active_(active), velControlMode(false) {};
   
   ControlStates(float r, float rf, float ri, float e, float de, float ti, float T, int u = 0, bool active = 0) 
-  : r_(r), rf_(rf), ri_(ri), e_(e), de_(de), ti_(ti), T_(T), u_(u), active_(active), velControlMode(false) {};
+  : r_(r), rf_(rf), ri_(ri), e_(e), de_(de), ti_(ti), T_(T), u_(u), active(active) {};
 };
 
 struct PositionControl {
@@ -60,7 +62,8 @@ struct EncoderStates
   int motorDirPin;
   int motorCurPin;
 
-	int ratio;
+  float ratio;
+  float lastTime;
   
   float current;
   
@@ -75,8 +78,8 @@ struct EncoderStates
   
   float velocity;
 
-  EncoderStates(int PIN1, int PIN2, int motorPWMPin, int motorDirPin, int motorCurPin, int pos) 
-  : pin1(PIN1), pin2(PIN2), motorPWMPin(motorPWMPin), motorDirPin(motorDirPin), motorCurPin(motorCurPin), value(pos), calibrate(false)
+  EncoderStates(int PIN1, int PIN2, int motorPWMPin, int motorDirPin, int motorCurPin, int pos, int maxValue) 
+  : pin1(PIN1), pin2(PIN2), motorPWMPin(motorPWMPin), motorDirPin(motorDirPin), motorCurPin(motorCurPin), value(pos), calibrate(false), minValue(0), maxValue(maxValue)
   {
     pinMode(pin1, INPUT_PULLUP);
     pinMode(pin2, INPUT_PULLUP);
@@ -90,6 +93,8 @@ struct EncoderStates
 //     digitalWrite(pin1, HIGH);
 //     digitalWrite(pin2, HIGH);
     digitalWrite(motorDirPin, HIGH);
+    
+    lastTime = micros()/1000000.0f - dT_serial;
 
 	current = 0.0f;
     velocity = 0.0f;
@@ -114,14 +119,15 @@ class MotorController
 	
 public:
   CalibrationStage::CalibrationStage calibrationStage;
+  int id;
   EncoderStates encoder;
   PIDParameters PID;
-  ControlStates controller;
+  ControlStates velocityController;
   PositionControl positionController;
 	float calvel;
 
   
-	MotorController(EncoderStates encoder, PIDParameters PID, ControlStates controller) :  encoder(encoder), PID(PID), controller(controller), calibrationStage(CalibrationStage::INACTIVE)
+	MotorController(int id,EncoderStates encoder, PIDParameters PID, ControlStates velocityController) :  id(id), encoder(encoder), PID(PID), velocityController(velocityController), calibrationStage(CalibrationStage::INACTIVE)
   {
     
   }
