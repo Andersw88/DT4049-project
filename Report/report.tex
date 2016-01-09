@@ -10,6 +10,9 @@
 \usepackage{minted}
 \usepackage{cite}
 \usepackage[top=1.0in, bottom=1.0in, left=0.75in, right=0.75in]{geometry}
+
+\usepackage{url}
+
 \author{Chittaranjan Srinivas Swaminathan and Anders Wikstrom}
 \title{Scortec ER-I Manipulator Control using Arduino Due}
 \begin{document}
@@ -94,7 +97,7 @@ To do this, we used the following steps:
 \item Detach the encoder board and use continuity test to figure out
   which components are connected.
 \item Using the above two, figure out the circuit diagram of the
-  board. This was found to be equivalent to figure
+  board. This was found to be equivalent to the circuit in figure
   \ref{fig:encoderCircuit}. 
 \item Finally, relate each pin on the encoder board to the
   circuit. 
@@ -137,7 +140,7 @@ also take from the Arduino Playground page on rotary encoders
 
 \begin{figure}[h]
     \centering
-    \includegraphics[scale=0.5]{debouncer.jpg}
+%    \includegraphics[scale=0.5]{debouncer.jpg}
     \caption{An RC filter for debouncing.}
     \label{fig:rcfilter}
 \end{figure}
@@ -145,6 +148,16 @@ also take from the Arduino Playground page on rotary encoders
 After introducing the RC Filter (hardware debounce circuit), the
 encoder readings seemed to be fairly stable. Minor error were still
 observed. 
+
+\subsection{Current sensing}
+We use current sensing to detect when we reach an end position where the arm is unable to move further. 
+PWM modulation means varying current.
+
+Moving average?
+
+lowpass filter?
+
+%Do we currently have a use for the filtering?
 
 \section{Control routines}
 
@@ -164,7 +177,7 @@ Each joint is calibrated as follows:
   direction, at which point calibration ends.
 \item The encoder value at positive extremum is the total encoder
   ticks for full range movement of the joint.
-
+\end{itemize}
 %%%%
 %%
 %% Write something about why this is done and how we do it in code.
@@ -209,8 +222,14 @@ computed a ratio from the average. \\
 \end{tabular}
 
 \subsection{Velocity Control}
+The velocity of the joints are controlled by a PID controller. 
+
 \subsection{Position Control}
+The position controller looks at the direction the arm have to move to reach the desired position. When is given a new position 
+
 \subsection{Overall organization of code}
+Each joint is controlled by an independent motor controller that contains all information needed to control it's joint. The motor controller stores things such as PIN numbers for encoders, current sensing and stores state information used for the encoders and PID controllers.
+
 
 \section{Evaluation of the system}
 
@@ -233,6 +252,9 @@ What did we get?
 \item Add all joints. Framework is ready.
 \item Do some forward kinematics and output tf to ROS.
 \item Write a controller for Moveit.
+\end{itemize}
+
 \bibliographystyle{ieeetr}
 \bibliography{report}
+
 \end{document}
