@@ -281,7 +281,7 @@ void MotorController::positionControl()
     velocityController.active = true;
   }
   else 
-    velocityController.active = true;
+    velocityController.active = false;
   
   if(encoder.current > 1.5) //Disables controller if current is to high, if the motor is unable to move futher.
   {
