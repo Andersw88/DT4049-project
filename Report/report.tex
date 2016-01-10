@@ -140,7 +140,7 @@ also take from the Arduino Playground page on rotary encoders
 
 \begin{figure}[h]
     \centering
-%    \includegraphics[scale=0.5]{debouncer.jpg}
+    \includegraphics[scale=0.5]{debouncer.jpg}
     \caption{An RC filter for debouncing.}
     \label{fig:rcfilter}
 \end{figure}
@@ -228,7 +228,7 @@ The velocity of the joints are controlled by a PID controller.
 The position controller looks at the direction the arm have to move to reach the desired position. When is given a new position 
 
 \subsection{Overall organization of code}
-Each joint is controlled by an independent motor controller that contains all information needed to control it's joint. The motor controller stores things such as PIN numbers for encoders, current sensing and stores state information used for the encoders and PID controllers.
+Each joint is controlled by an independent motor controller that contains all information needed to control its joint. The motor controller stores things such as PIN numbers for encoders, current sensing and stores state information used for the encoders and PID controllers.
 
 
 \section{Evaluation of the system}
