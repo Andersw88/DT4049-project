@@ -9,21 +9,26 @@
 \usepackage{float}
 \usepackage{minted}
 \usepackage{cite}
-\usepackage[top=1.0in, bottom=1.0in, left=0.75in, right=0.75in]{geometry}
+\usepackage[top=1.0in, bottom=1.0in, left=1.00in, right=1.00in]{geometry}
 
 \usepackage{url}
 
-\author{Chittaranjan Srinivas Swaminathan and Anders Wikstrom}
+\author{Chittaranjan Srinivas Swaminathan and Anders Wikström}
 \title{Scortec ER-I Manipulator Control using Arduino Due}
 \begin{document}
 \maketitle
 \tableofcontents
 \newpage
 \section{Introduction}
-
-\section{Description of task}
 The Scortec ER-I is a 5-DOF manipulator from Eshed Robotec whose
-control box is missing. The goal of this project is to use the Arduino
+control box is missing. The Manipulator consists of five
+joints. Incremental optical encoders are mounted on the motor
+shaft. Each encoder board consists of two Photodiode-LED pairs. This
+enables us to measure both the angular displacement and the direction
+of movement. The manipulator has a D50 connector connected to the
+motors and the encoders.\\
+
+The goal of this project is to use the Arduino
 Due board and a motor shield to make a new controller for the
 manipulator. 
 
@@ -146,18 +151,20 @@ also take from the Arduino Playground page on rotary encoders
 \end{figure}
 
 After introducing the RC Filter (hardware debounce circuit), the
-encoder readings seemed to be fairly stable. Minor error were still
+encoder readings seemed to be fairly stable. Some errors were still
 observed. 
 
 \subsection{Current sensing}
-We use current sensing to detect when we reach an end position where the arm is unable to move further. 
-PWM modulation means varying current.
-
-Moving average?
-
-lowpass filter?
-
-%Do we currently have a use for the filtering?
+We use current sensing to detect an extremum position, where the arm
+is unable to move further. Since we use a PWM to control the motor, we
+need some means of filtering the current so that we get a steadier
+value than what we would get when we measure it directly. This is done
+in two ways: 
+\begin{enumerate}
+\item A capacitor between the current pin and ground: the capacitor
+  helps smooth out the current values.
+\item A software low-pass filter.
+\end{enumerate}
 
 \section{Control routines}
 
@@ -165,6 +172,19 @@ In this section, the control routines and organization of code is
 described. We employ a PID controller for velocity 
 
 \subsection{Calibration}
+
+The main aim of calibration is to find out how many pulses are
+received for every degree that the joint moves. The range of the each
+joint was taken from the datasheet of the manipulator. Then, we
+calculated the total encoder ticks for the full range of a joint. We
+then computed a ratio to convert angular displacement/velocity
+described in encoder ticks to degrees. That is,
+\[ \alpha = \frac{range\ of\ joint}{measured\ encoder\ ticks}\]
+
+where \(\alpha\) is the ratio described above\footnote{The ratio
+  \(\alpha\) is simply called 'ratio' in code.}. The unit of
+\(\alpha\) is \( \frac{encoder\ ticks}{degree}\). \\
+
 
 Each joint is calibrated as follows:
 \begin{itemize}
@@ -178,23 +198,8 @@ Each joint is calibrated as follows:
 \item The encoder value at positive extremum is the total encoder
   ticks for full range movement of the joint.
 \end{itemize}
-%%%%
-%%
-%% Write something about why this is done and how we do it in code.
-%%
-%%%%
 
 \subsubsection{Results from calibration}
-The range of the joints was taken from the datasheet of the
-manipulator. If we calculate the total encoder ticks for the full
-range of a joint, then we can compute a ratio to convert angular
-displacement/velocity described in encoder ticks to
-degrees. We have,
-\[ \alpha = \frac{range\ of\ joint}{measured\ encoder\ ticks}\]
-
-where \(\alpha\) is the ratio described above\footnote{The ratio
-  \(\alpha\) is simply called 'ratio' in code.}. The unit of
-\(\alpha\) is \( \frac{encoder\ ticks}{degree}\). \\
 
 We observed that the number of ticks over the full range varied more
 than a few tens of ticks. Hence, we averaged the measured ticks and
