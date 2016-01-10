@@ -48,7 +48,50 @@
       \item<2-> Use Arduino Due + Motor shield and make a new controller.
     \end{itemize}
   \end{frame}
-
+  
+  
+  \begin{frame}
+	\frametitle{Control}
+	\begin{itemize}
+      \item<1-> Controlled by giving it a position command.
+      \item<1-> Arms starts moving in the direction of the error.
+      \item<2-> Velocity is constant and is controlled by a PID.
+      \item<2-> Arm stops when it reaches it target position.
+      \item<3-> Each joint is controlled by an independent controller.
+    \end{itemize}
+  \end{frame}
+  
+  \begin{frame}
+	\frametitle{Calibration}
+	  \begin{itemize}
+      	\item Finds endpoints
+      	\item Stops when the current gets to high.
+      	\item Read encoder values
+      	\item Calculate encoder/degree ratio.
+      \end{itemize}
+  \end{frame}
+  
+    \begin{frame}
+	\frametitle{Calibration}
+	  \begin{itemize}
+      	\item Joint 1 span of 320 degrees, 
+      	\item Ratio joint 1: 30.71875 ticks/degree
+      	\item Joint 3 span of 187 degrees.
+      	\item Ratio joint 3: 17.049 ticks/degree
+      \end{itemize}
+  \end{frame}
+  
+  
+  \begin{frame}
+    \frametitle{Accuracy and precision}
+    \begin{itemize}
+      \item Measure the error in the encoders.
+      \item Moving joint 1 by 90 degrees by hand and compare encoder readings.
+      \item Accuracy: 4.629 degrees off, or 5.14\% of 90 degrees.
+      \item Precision: Variance of 1.23 degrees.
+	\end{itemize}
+  \end{frame}
+  
   \begin{frame}
   \end{frame}
 \end{document}
