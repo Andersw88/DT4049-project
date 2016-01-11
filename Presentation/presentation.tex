@@ -27,16 +27,9 @@
           \item Encoders and debouncing
         \end{itemize}
       \item Control
-        \begin{itemize}
-          \item Velocity Control
-          \item Position Control
-          \item Calibration
-        \end{itemize}
-      \item Accuracy and precision
-        \begin{itemize}
-          \item Measurement 
-          \item Control
-        \end{itemize}
+      \item Calibration
+      \item Encoder accuracy and precision
+      \item Future Work
     \end{enumerate}
 
   \end{frame}
@@ -155,7 +148,7 @@ Equivalent circuit for the encoder board.
 	\frametitle{Calibration}
 	  \begin{itemize}
       	\item Finds endpoints
-      	\item Stops when the current gets to high.
+      	\item Stops when the current gets too high.
       	\item Read encoder values
       	\item Calculate encoder/degree ratio.
       \end{itemize}
@@ -170,8 +163,7 @@ Equivalent circuit for the encoder board.
       	\item Ratio joint 3: 17.049 ticks/degree
       \end{itemize}
   \end{frame}
-  
-  
+    
   \begin{frame}
     \frametitle{Accuracy and precision}
     \begin{itemize}
@@ -183,5 +175,20 @@ Equivalent circuit for the encoder board.
   \end{frame}
   
   \begin{frame}
+    \frametitle{Future work}
+    \begin{itemize}
+    \item Improve encoder accuracy.
+    \item Extend control to all 5 joints.
+    \item Forward kinematics.
+    \item Publish tf and ``joint\_states'' msg on ROS.
+    \end{itemize}
+  \end{frame}
+
+  \begin{frame}
+    \centering
+    \huge
+    Thank you. \\
+    \vspace{0.5in}
+    \onslide<2-> Any Questions?
   \end{frame}
 \end{document}
