@@ -17,6 +17,11 @@
 \title{Scortec ER-I Manipulator Control using Arduino Due}
 \begin{document}
 \maketitle
+\begin{figure}[h]
+    \centering
+    \includegraphics{robotArm.png}
+\end{figure}
+\newpage
 \tableofcontents
 \newpage
 \section{Introduction}
@@ -69,8 +74,8 @@ multimeter to test for continuity. The process was repeated for each
 motor and encoder board. Figuring out the circuit on the encoder board
 was also important so as to understand which pins were the power
 supply pins and which pins were the output pins.\\
-
-The figure \ref{fig:dsub} is the pinout diagram. Note
+\newpage
+Figure \ref{fig:dsub} is the pinout diagram. Note
 that: \begin{itemize} 
 \item \( E^a_b \) refers to output of encoder \textit{b} on joint \textit{a}.
 \item \( GND^a \) refers to ground for encoder board on joint \textit{a}.
@@ -79,7 +84,6 @@ that: \begin{itemize}
 \item \( M^a+ \) refers to the positive pin on motor \textit{a}.
 \item \( M^a- \) refers to the negative pin on motor \textit{a}.
 \end{itemize}
-
 
 \begin{figure}[h]
     \centering
@@ -258,17 +262,16 @@ controller stores things such as pin numbers for encoders and current
 sensing, and stores state information used for the encoders and PID
 controllers.
 
+The code and be found at \url{https://github.com/Andersw88/DT4049-project}.
+
 \section{Evaluation of the system}
-Two methods:
-\begin{itemize}
-\item Accuracy and precision of the incremental optical encoders.
-\item Accuracy and precision of the control system.
-\end{itemize}
+Evaluation was done to study the accuracy and precision of the incremental optical encoders. This is described in the section below. \\
+All measurements in thes following tables are in degrees. 
 
 \subsection{Accuracy and Precision for Joint 1}
 To evaluate the performance of our controller we did some tests. The most important aspects of performance for the controller would be its accuracy and precision. \\
 
-We decided to run the test on Joint 1 since it is not affected by gravity in the axis of rotation. First we marked two locations on the base of the robot we measured to be 90 degrees away from each other.  We ran our test by moving Joint one from one of the points, record the angle our controller reported, then moved it back and recorded that angle. The circumference of the base of the joint was measured to be 66.8 cm and angles were measured by measuring arc lengths. The least count of the tape used is 0.1 cm. This gives us a least count of 0.54 degrees.\\
+We decided to run the test on joint 1 since it is not affected by gravity in the axis of rotation. First we marked two locations on the base of the robot 90$ ^{\circ} $ away from each other.  We ran our test by moving joint 1 from one of the points, recorded the angle our controller reported, then moved it back and recorded that angle. The circumference of the base of the joint was measured to be 66.8 cm and angles were measured by measuring arc lengths. The least count of the tape used is 0.1 cm. This gives us a least count of 0.54$ ^{\circ} $.\\
 
 \begin{tabular}{ | l | r |}
 \hline
@@ -296,9 +299,9 @@ We decided to run the test on Joint 1 since it is not affected by gravity in the
 \hline
 \end{tabular} \\ 
 
-The mean error in this test is 4.63 degrees and that becomes an error of 5.14\%. Thus without further signal possessing and filtering the accuracy of the encoder probably not good enough for any real use case. The precision is better, the variance is 1.23.\\
+The mean error in this test is 4.63$ ^{\circ} $ and that becomes an error of 5.14\%. Thus without further signal possessing and filtering the accuracy of the encoder probably not good enough for any real use case. The precision is better, the variance is 1.23.\\
 
-We repeated the experiment but instead of moving Joint 1 by hand we moved it with our controller. We made the controller move at approximately the same speed as when we move the joint by hand. The table below shows commands when we told it to move 30 degrees, the sensed value is the value the controller reports when it stops. \\
+We repeated the experiment but instead of moving joint 1 by hand we moved it with our controller. We made the controller move at approximately the same speed as when we move the joint by hand. The table below shows commands when we told it to move 30$ ^{\circ} $, the sensed value is the value the controller reports when it stops. \\
 
 \begin{tabular}{ | l | r | r |}
 \hline
@@ -316,7 +319,7 @@ We repeated the experiment but instead of moving Joint 1 by hand we moved it wit
 \hline
 \end{tabular} \\
 
-We can see that the mean error is 0.43 or 1.45\% with a variance of 0.27. The std and the mean is comparable to the least count of the measurement used.
+We can see that the mean error is 0.43$ ^{\circ} $ or 1.45\% with a variance of 0.27. The std and the mean is comparable to the least count of the measurement used.
 As we can see the error in position measurement is less than when we moved the joint by hand. We suspect this is caused by a systematic error present when moving the joints with our controller and since we do the calibration with the motors powered, the systematic error is canceled.
 
 \section{Future Work}
@@ -331,7 +334,7 @@ done with the manipulator:
   position. 
 \item All joints can be integrated into the controller. A neat
   framework is already available. Figuring out the pins and making the
-  appropriate connections is all that is required to do.
+  appropriate connections is all that is required.
 \item Do some forward kinematics and output tf to ROS.
 \end{itemize}
 
