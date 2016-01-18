@@ -134,11 +134,11 @@ The first test was to move the motor shaft by hand and check if the
 rotation produced the necessary encoder ticks. This step gave positive
 results. The next step was to move the joint by hand and see if the
 incremental position was stable between motions. This step also gave
-positive results. The position was only off by a few ticks everytime
+positive results. The position was only off by a few ticks every time
 the joint was moved from one extremum position to another. \\
 
 However, when the joint was moved using PWM input, we obtained far
-more encoder ticks than when moved manually. Furthur inquiry lead us
+more encoder ticks than when moved manually. Further inquiry lead us
 to use a debouncer circuit shown in figure \ref{fig:rcfilter}. This is
 also take from the Arduino Playground page on rotary encoders
 \cite{ArduinoPlaygroundRE}.\\
@@ -228,18 +228,16 @@ Span of Joint 3 is \(187^{\circ}\).\\
 
 \end{tabular}
 
-\subsection{Velocity Control}
-The velocity of the joints are controlled by a PID controller. 
-
 \subsection{Position Control}
-The position controller looks at the direction the arm have to move to reach the desired position. When is given a new position 
+The position controller looks at the direction the arm have to move to reach the desired position. When is given a new position command is given, position control activates velocity control with a set velocity. Position control continuously check is the correct position has been reached and stops the velocity control.
+
+\subsection{Velocity Control}
+The velocity of the joints are controlled by a PID controller. The controller tries to move at a constant velocity in the direction given by the position control. 
 
 \subsection{Overall organization of code}
 Each joint is controlled by an independent motor controller that contains all information needed to control its joint. The motor controller stores things such as PIN numbers for encoders, current sensing and stores state information used for the encoders and PID controllers.
 
-
 \section{Evaluation of the system}
-
 Two methods:
 \begin{itemize}
 \item Accuracy and precision of the incremental optical encoders.
@@ -247,6 +245,30 @@ Two methods:
 \end{itemize}
 
 \subsection{Accuracy and Precision for Joint 1}
+To evaluate the performance of our controller we did some tests. The most important aspects of performance for the controller would be its accuracy and precision.
+
+To test 
+
+\begin{tabular}{ | l | r | r |}
+\hline
+- & \textbf{Joint 1} & \textbf{Joint 3} \\
+\hline
+1 & 165.1 & 251.79 \\
+\hline
+2 & 167.31 & 251.72 \\
+\hline
+3 & 168 & 254.58 \\
+\hline
+4 & 167.9 & 168.1 \\
+\hline
+5 & 168.13 & \\
+\hline
+\textbf{Mean} & 9830 & 3188.2 \\
+\hline
+\textbf{Ratio} & 30.71875 & 17.049 \\
+\hline
+\end{tabular}
+
 How did we measure?
 What did we get?
 
