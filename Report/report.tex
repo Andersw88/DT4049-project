@@ -243,32 +243,95 @@ Two methods:
 \end{itemize}
 
 \subsection{Accuracy and Precision for Joint 1}
-To evaluate the performance of our controller we did some tests. The most important aspects of performance for the controller would be its accuracy and precision.
+To evaluate the performance of our controller we did some tests. The most important aspects of performance for the controller would be its accuracy and precision. \\
 
-To test 
+We decided to run the test on Joint 1 since it is not affected by gravity in the axis of rotation. First we marked two locations on the base of the robot we measured to be 90 degrees away from each other.  We ran our test by moving Joint one from one of the points, record the angle our controller reported, then moved it back and recorded that angle. The circumference of the base of the joint was measured to be 66.8 cm and angles were measured by measuring arc lengths. The least count of the tape used is 0.1 cm. This gives us a least count of 0.54 degrees.\\
+
+%\begin{tabular}{ | l | r |}
+%\hline
+%\textbf{Joint 1} & \textbf{Error} \\
+%\hline
+% 165.10 &  \\
+%\hline
+% 251.79 & 3.31 \\
+%\hline
+% 167.31 & 5.52 \\
+%\hline
+% 251.72 & 5.59 \\
+%\hline
+% 168.00 & 6.28\\
+%\hline
+% 254.58 & 3.42\\
+%\hline
+%167.90 & 3.32\\
+%\hline
+%253.93 & 3.97\\
+%\hline
+%168.10 & 4.17\\
+%\hline
+%252.76 & 5.34\\
+%\hline
+%168.13 & 5.37\\
+%\hline
+%\end{tabular} \\
+
+\begin{tabular}{ | l | r |}
+\hline
+\textbf{Measured} & \textbf{Error} \\
+\hline
+ 86.69 & 3.31 \\
+\hline
+ 84.48 & 5.52 \\
+\hline
+ 84.41 & 5.59 \\
+\hline
+ 83.72 & 6.28 \\
+\hline
+ 86.58 & 3.42\\
+\hline
+ 86.68 & 3.32\\
+\hline
+86.03 & 3.97\\
+\hline
+85.83 & 4.17\\
+\hline
+84.66 & 5.34\\
+\hline
+84.63 & 5.37\\
+\hline
+\end{tabular} \\ 
+
+%\hline
+%\textbf{Mean error} & \textbf{Variance}\\
+%\hline
+% 4.63 & 1.23 \\
+%\hline
+%5.14\%  &  \\
+%\hline
+%\end{tabular}
+
+The mean error in this test is 4.63 degrees and that becomes an error of 5.14\%. Thus without further signal possessing and filtering the accuracy of the encoder probably not good enough for any real use case. The precision is better, the variance is 1.23.\\
+
+We repeated the experiment but instead of moving Joint 1 by hand we moved it with our controller. We made the controller move at approximately the same speed as when we move the joint by hand. The table below shows commands when we told it to move 30 degrees, the sensed value is the value the controller reports when it stops. \\
 
 \begin{tabular}{ | l | r | r |}
 \hline
-- & \textbf{Joint 1} & \textbf{Joint 3} \\
+\textbf{Measured} & \textbf{Sensed} & \textbf{Error} \\
 \hline
-1 & 165.1 & 251.79 \\
+ 28.02 & 28.58 & 0.56  \\
 \hline
-2 & 167.31 & 251.72 \\
+ 28.56	& 28.78 & 0.21 \\
 \hline
-3 & 168 & 254.58 \\
+ 28.56 & 28.91 & 0.35 \\
 \hline
-4 & 167.9 & 168.1 \\
+ 29.10 & 28.74 & 0.36 \\
 \hline
-5 & 168.13 & \\
+ 29.64 & 28.94 & 0.70\\
 \hline
-\textbf{Mean} & 9830 & 3188.2 \\
-\hline
-\textbf{Ratio} & 30.71875 & 17.049 \\
-\hline
-\end{tabular}
+\end{tabular} \\
 
-How did we measure?
-What did we get?
+We can see that the mean error is 0.43 or 1.45\% with a variance of 0.27. The std and the mean is comparable to the least count of the measurement used.
+As we can see the error in position measurement is less than when we moved the joint by hand. We suspect this is caused by a systematic error present when moving the joints with our controller and since we do the calibration with the motors powered, the systematic error is canceled.
 
 \section{Future Work}
 
