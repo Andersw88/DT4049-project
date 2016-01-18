@@ -108,14 +108,14 @@ To do this, we used the following steps:
   circuit. 
 \end{enumerate}
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[scale=0.5]{SimpleEncoder.jpg}
     \caption{Basic circuit for Photodiode-LED pair.}
     \label{fig:photodiodeLEDPair}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[scale=0.5]{EncoderCircuit.jpg}
     \caption{Equivalent Encoder circuit with two Photodiode-LED
@@ -143,7 +143,7 @@ to use a debouncer circuit shown in figure \ref{fig:rcfilter}. This is
 also take from the Arduino Playground page on rotary encoders
 \cite{ArduinoPlaygroundRE}.\\
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[scale=0.5]{debouncer.jpg}
     \caption{An RC filter for debouncing.}
@@ -152,7 +152,14 @@ also take from the Arduino Playground page on rotary encoders
 
 After introducing the RC Filter (hardware debounce circuit), the
 encoder readings seemed to be fairly stable. Some errors were still
-observed. 
+observed. We tried looking at the signal from the encoders on a oscilloscope, Fig \ref{fig:encoderSignal}, to see if we could find a reason for the error we still observed, but we could find none. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.3]{encoderSignal.jpg}
+    \caption{Signal from encoder 1 and 2.}
+    \label{fig:encoderSignal}
+\end{figure}
 
 \subsection{Current sensing}
 We use current sensing to detect an extremum position, where the arm
@@ -264,34 +271,6 @@ To evaluate the performance of our controller we did some tests. The most import
 
 We decided to run the test on Joint 1 since it is not affected by gravity in the axis of rotation. First we marked two locations on the base of the robot we measured to be 90 degrees away from each other.  We ran our test by moving Joint one from one of the points, record the angle our controller reported, then moved it back and recorded that angle. The circumference of the base of the joint was measured to be 66.8 cm and angles were measured by measuring arc lengths. The least count of the tape used is 0.1 cm. This gives us a least count of 0.54 degrees.\\
 
-%\begin{tabular}{ | l | r |}
-%\hline
-%\textbf{Joint 1} & \textbf{Error} \\
-%\hline
-% 165.10 &  \\
-%\hline
-% 251.79 & 3.31 \\
-%\hline
-% 167.31 & 5.52 \\
-%\hline
-% 251.72 & 5.59 \\
-%\hline
-% 168.00 & 6.28\\
-%\hline
-% 254.58 & 3.42\\
-%\hline
-%167.90 & 3.32\\
-%\hline
-%253.93 & 3.97\\
-%\hline
-%168.10 & 4.17\\
-%\hline
-%252.76 & 5.34\\
-%\hline
-%168.13 & 5.37\\
-%\hline
-%\end{tabular} \\
-
 \begin{tabular}{ | l | r |}
 \hline
 \textbf{Measured} & \textbf{Error} \\
@@ -317,15 +296,6 @@ We decided to run the test on Joint 1 since it is not affected by gravity in the
 84.63 & 5.37\\
 \hline
 \end{tabular} \\ 
-
-%\hline
-%\textbf{Mean error} & \textbf{Variance}\\
-%\hline
-% 4.63 & 1.23 \\
-%\hline
-%5.14\%  &  \\
-%\hline
-%\end{tabular}
 
 The mean error in this test is 4.63 degrees and that becomes an error of 5.14\%. Thus without further signal possessing and filtering the accuracy of the encoder probably not good enough for any real use case. The precision is better, the variance is 1.23.\\
 
