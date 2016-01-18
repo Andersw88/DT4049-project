@@ -204,6 +204,8 @@ Each joint is calibrated as follows:
 We observed that the number of ticks over the full range varied more
 than a few tens of ticks. Hence, we averaged the measured ticks and
 computed a ratio from the average. \\ 
+Span of Joint 1 is \(320^{\circ}\).\\
+Span of Joint 3 is \(187^{\circ}\).\\
 
 \begin{tabular}{ | l | r | r |}
 \hline
@@ -227,13 +229,28 @@ computed a ratio from the average. \\
 \end{tabular}
 
 \subsection{Position Control}
-The position controller looks at the direction the arm have to move to reach the desired position. When is given a new position command is given, position control activates velocity control with a set velocity. Position control continuously check is the correct position has been reached and stops the velocity control.
+The position controller computes the direction in which the arm has to
+move to reach the desired position. Given a new position setpoint,
+position control activates velocity control with a set
+velocity. Position control continuously checks if the current position
+is within \( 2^{\circ}\) of the setpoint. If this is so, it resets
+velocity control every time the condition is satisfied. This results
+in there being no movement when the error is less than \(
+2^{\circ}\). However, when we push the joint manually, it returns to
+the setpoint because the velocity controller is no longer reset, and
+the velocity can slowly rise.
 
 \subsection{Velocity Control}
-The velocity of the joints are controlled by a PID controller. The controller tries to move at a constant velocity in the direction given by the position control. 
+The velocity of the joints are controlled by a PID controller with a
+minimum jerk response. The controller tries to move at a constant
+velocity in the direction given by the position control.
 
 \subsection{Overall organization of code}
-Each joint is controlled by an independent motor controller that contains all information needed to control its joint. The motor controller stores things such as PIN numbers for encoders, current sensing and stores state information used for the encoders and PID controllers.
+Each joint is controlled by an independent motor controller that
+contains all information needed to control its joint. The motor
+controller stores things such as pin numbers for encoders and current
+sensing, and stores state information used for the encoders and PID
+controllers.
 
 \section{Evaluation of the system}
 Two methods:
